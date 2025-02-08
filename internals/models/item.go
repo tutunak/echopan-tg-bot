@@ -7,10 +7,10 @@ import (
 
 type Enclosure struct {
 	gorm.Model
-	Url    string
-	Length string
-	Type   string
-	ItemId int
+	Url    string `gorm:"not null;size:2048"`
+	Length int64  `gorm:"not null"`
+	Type   string `gorm:"size:255"`
+	ItemId uint   `gorm:"not null;index"`
 }
 type Item struct {
 	gorm.Model
