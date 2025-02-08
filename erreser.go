@@ -127,11 +127,16 @@ func updateItems(db *gorm.DB, items []*gofeed.Item, feed *models.Feed) {
 		var existingItem models.Item
 		db.Where(&models.Item{Title: item.Title}).FirstOrCreate(&existingItem, item)
 		for _, enc := range v.Enclosures {
+			encInt, err := strconv.ParseUint(enc.Length, 10, 64)
+			if err != nil {
+				log.Println("Error parsing enclosure length: ", err)
+				os.Exit(1)
+			}
 			enclosure := models.Enclosure{
 				Url:    enc.URL,
-				Length: enc.Length,
+				Length: encInt,
 				Type:   enc.Type,
-				ItemId: int(existingItem.ID),
+				ItemId: existingItem.ID,
 			}
 			db.Where(&models.Enclosure{Url: enclosure.Url}).FirstOrCreate(&models.Enclosure{}, enclosure)
 		}
@@ -261,7 +266,7 @@ func downloadEpisode(db *gorm.DB, item models.Item) string {
 	// download the episode, the lik taken from enclosures URL
 	log.Printf("Downloading episode %s", item.Title)
 	var enclosures []models.Enclosure
-	db.Where(&models.Enclosure{ItemId: int(item.ID)}).First(&enclosures)
+	db.Where(&models.Enclosure{ItemId: item.ID}).First(&enclosures)
 	if len(enclosures) == 0 {
 		log.Printf("No enclosures found for item %s", item.Title)
 		return ""
