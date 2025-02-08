@@ -8,7 +8,7 @@ COPY go.* ./
 RUN go mod download
 COPY . .
 # Build with optimizations
-RUN CGO_ENABLED=0 GOOS=linux go build -a -ldflags="-w -s" -o echopan .
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o echopan .
 
 FROM alpine:3.18 as production
 LABEL authors="tutunak"
