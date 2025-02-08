@@ -95,7 +95,7 @@ func getAllFeeds(db *gorm.DB) ([]models.Feed, error) {
 	return feeds, nil
 }
 
-func updateItems(db *gorm.DB, items []*gofeed.Item, feed *models.Feed) {
+func updateItems(db *gorm.DB, items []*gofeed.Item, feed *models.Feed) error {
 	db.AutoMigrate(&models.Item{})
 	db.AutoMigrate(&models.Enclosure{})
 	for _, v := range items {
@@ -130,7 +130,7 @@ func updateItems(db *gorm.DB, items []*gofeed.Item, feed *models.Feed) {
 			encInt, err := strconv.ParseUint(enc.Length, 10, 64)
 			if err != nil {
 				log.Println("Error parsing enclosure length: ", err)
-				os.Exit(1)
+				return err
 			}
 			enclosure := models.Enclosure{
 				Url:    enc.URL,
@@ -141,6 +141,7 @@ func updateItems(db *gorm.DB, items []*gofeed.Item, feed *models.Feed) {
 			db.Where(&models.Enclosure{Url: enclosure.Url}).FirstOrCreate(&models.Enclosure{}, enclosure)
 		}
 	}
+	return nil
 }
 func fullFeed(feedTitle string) {
 	dbParams := database.InitDbParams()
