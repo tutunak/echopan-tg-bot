@@ -1,0 +1,21 @@
+on:
+  push:
+    branches:
+    - master
+    - development
+  pull_request:
+    branches:
+    - master
+    - development
+env:
+  GO_VERSION: '1.21.5'
+jobs:
+  Dockerfile:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Lint
+      uses: hadolint/hadolint-action@v3.1.0
+      with:
+        dockerfile: Dockerfile
+        verbose: true
