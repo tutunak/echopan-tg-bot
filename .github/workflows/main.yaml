@@ -13,7 +13,7 @@ jobs:
   Dockerfile:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Lint
       uses: hadolint/hadolint-action@v3.1.0
       with:
@@ -24,9 +24,7 @@ jobs:
     needs:
         - Dockerfile
     steps:
+    - uses: actions/checkout@v4
     - name: podman build
       run: |
-        podman build -t ghcr.io/${{ github.repository }}:${{ github.sha }} .
-    - name: podman push
-      run: |
-        podman push ghcr.io/${{ github.repository }}:${{ github.sha }}
+        podman build .
