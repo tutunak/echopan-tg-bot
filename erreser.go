@@ -213,7 +213,7 @@ func getFirstUnpublishedItem(db *gorm.DB, feed models.Feed) (models.Item, error)
 func getUnpublisehdItems(db *gorm.DB, feed models.Feed) []models.Item {
 	var items []models.Item
 	//sorted by published date from the oldest to the newest
-	db.Where(&models.Item{FeedId: int(feed.ID), TgPublished: 0}).Not(&models.Item{TgPublished: 1}).Order("published_parsed asc").Find(&items)
+	db.Where(map[string]interface{}{"feed_id": int(feed.ID), "tg_published": 0}).Order("published_parsed asc").Find(&items)
 	return items
 }
 
