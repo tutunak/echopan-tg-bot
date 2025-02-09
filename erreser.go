@@ -22,14 +22,6 @@ import (
 	"gorm.io/gorm"
 )
 
-func getEnvWithDefault(key, defaultValue string) string {
-	value := os.Getenv(key)
-	if value == "" {
-		return defaultValue
-	}
-	return value
-}
-
 func addFeed(feed string) {
 	log.Println("Showing RSS feed data for: ", feed)
 	fp := gofeed.NewParser()
