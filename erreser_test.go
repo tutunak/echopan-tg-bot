@@ -76,7 +76,7 @@ func TestGetUnpublishedItems(t *testing.T) {
 	db.Create(&item3)
 
 	// Call the function to test
-	items := getUnpublisehdItems(db, feed)
+	items := getUnpublishedItems(db, feed)
 
 	// Assert the results
 	assert.Equal(t, 2, len(items), "There should be 2 unpublished items")
