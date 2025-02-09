@@ -267,7 +267,7 @@ func downloadEpisode(db *gorm.DB, item models.Item) string {
 	// download the episode, the lik taken from enclosures URL
 	log.Printf("Downloading episode %s", item.Title)
 	var enclosures []models.Enclosure
-	db.Where(&models.Enclosure{ItemId: item.ID}).First(&enclosures)
+	db.Where(&models.Enclosure{ItemId: item.ID}).Limit(1).Find(&enclosures)
 	if len(enclosures) == 0 {
 		log.Printf("No enclosures found for item %s", item.Title)
 		return ""
@@ -289,7 +289,7 @@ func deleteFile(file string) {
 
 func publishToTheChannel(feed models.Feed, item models.Item, episodeFile string) {
 	log.Printf("Publishing to telegram %s", item.Title)
-	log.Printf("Published %s", item.TgPublished)
+	log.Printf("Published %d", item.TgPublished)
 	log.Printf("item id %d", item.ID)
 	botToken := os.Getenv("EP_TG_BOT_TOKEN")
 	if botToken == "" {
