@@ -263,6 +263,23 @@ func downloadFile(url string) string {
 	return tmpFile.Name()
 }
 
+// DownloadEpisode downloads an episode file using the first available enclosure associated with the given item.
+// It queries the database for up to one enclosure corresponding to the item's ID. If an enclosure is found,
+// it downloads the file from the enclosure's URL by calling downloadFile, logs the progress, and returns the local file path.
+// If no enclosure is found, it logs an appropriate message and returns an empty string.
+//
+// Parameters:
+//   db   - Pointer to the gorm.DB instance used for database queries.
+//   item - The models.Item instance representing the episode, whose Title is used for logging and ID for lookup.
+//
+// Returns:
+//   The local file path to the downloaded episode file as a string, or an empty string if no enclosure is available.
+//
+// Example usage:
+//   filePath := downloadEpisode(db, item)
+//   if filePath == "" {
+//       log.Println("No enclosure found; download aborted.")
+//   }
 func downloadEpisode(db *gorm.DB, item models.Item) string {
 	// download the episode, the lik taken from enclosures URL
 	log.Printf("Downloading episode %s", item.Title)
@@ -287,6 +304,25 @@ func deleteFile(file string) {
 	log.Printf("Deleted file: %s", file)
 }
 
+// publishToTheChannel sends an audio file representing a podcast episode to a Telegram channel.
+// It retrieves the bot token from the EP_TG_BOT_TOKEN environment variable (and the API URL from EP_TG_BOT_URL),
+// then initializes a Telegram bot to send an audio message. The function logs key details such as the episode title,
+// publication count, and item ID, and processes the episode caption by truncating the subtitle to 800 characters
+// (if needed), omitting it when the feed ID equals 34, and appending an extra link if ExtraLinkEnabled is true.
+// The audio file is constructed with a Markdown-formatted caption and sent to the Telegram channel.
+// In case of errors, if the error message indicates that the file is too large or the text encoding is not UTF-8,
+// a corresponding log message is produced; all other errors trigger a panic.
+// 
+// Parameters:
+//   feed        - a models.Feed instance containing Telegram channel settings and extra link configuration.
+//   item        - a models.Item containing episode details such as Title, ItunesSubtitle, TgPublished, ID, and FeedId.
+//   episodeFile - a string specifying the path of the downloaded audio file to be published.
+// 
+// Environment Variables:
+//   EP_TG_BOT_TOKEN - Telegram bot token; the function panics if not set.
+//   EP_TG_BOT_URL   - Optional Telegram bot API URL.
+// 
+// Note: This function does not return a value and will log or panic on critical errors.
 func publishToTheChannel(feed models.Feed, item models.Item, episodeFile string) {
 	log.Printf("Publishing to telegram %s", item.Title)
 	log.Printf("Published %d", item.TgPublished)
