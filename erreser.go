@@ -434,7 +434,7 @@ func publish() {
 	db := database.DbConnect(DbParams)
 	feeds := getReadyFeeds(db)
 	for _, feed := range feeds {
-		items := getUnpublisehdItems(db, feed)
+		items := getUnpublishedItems(db, feed)
 		for _, item := range items {
 			episodeFile := downloadEpisode(db, item)
 			if episodeFile == "" {
