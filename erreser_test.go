@@ -55,7 +55,9 @@ func TestDownloadEpisodeNoEnclosure(t *testing.T) {
 
 func TestGetUnpublishedItems(t *testing.T) {
 	// Create an in-memory SQLite database for testing
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{
+		SkipDefaultTransaction: true,
+	})
 	if err != nil {
 		t.Fatalf("Failed to connect to database: %v", err)
 	}
