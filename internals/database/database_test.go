@@ -70,19 +70,19 @@ func TestDbConnect_PanicsWithInvalidFile(t *testing.T) {
 	// GORM's behavior with truly invalid paths can sometimes be creating the file anyway if possible,
 	// so we rely on the "failed to connect database" panic message which is specific to our code.
 
-	params := &DbParams{File: "/this/path/should/not/be/writable/test.db"} // Invalid path
+	params := &DbParams{Type: DbTypeSqlite, File: "/this/path/should/not/be/writable/test.db"} // Invalid path
 
-	assert.PanicsWithValue(t, "failed to connect database: unable to open database file: no such file or directory", func() {
+	assert.PanicsWithValue(t, "failed to connect sqlite database: unable to open database file: no such file or directory", func() {
 		DbConnect(params)
 	}, "DbConnect should panic with 'failed to connect database' for an invalid file path")
 }
 
 func TestDbConnect_PanicsWithEmptyFile(t *testing.T) {
-	params := &DbParams{File: ""} // Empty file path
+	params := &DbParams{Type: DbTypeSqlite, File: ""} // Empty file path
 
-	assert.PanicsWithValue(t, "database file path is required", func() {
+	assert.PanicsWithValue(t, "database file path is required for sqlite", func() {
 		DbConnect(params)
-	}, "DbConnect should panic with 'failed to connect database' for an empty file path")
+	}, "DbConnect should panic with 'database file path is required for sqlite' for an empty file path")
 }
 
 func TestDbConnect_Postgres_InvalidDSN(t *testing.T) {
