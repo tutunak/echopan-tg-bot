@@ -1,7 +1,6 @@
 module github.com/tutuna/echopan
 
-go 1.21.5
-toolchain go1.24.1
+go 1.24.3
 
 require (
 	github.com/google/subcommands v1.2.0
