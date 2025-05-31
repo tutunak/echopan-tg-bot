@@ -18,11 +18,11 @@ func InitDbParams() *DbParams {
 
 func DbConnect(params *DbParams) *gorm.DB {
 	if params.File == "" {
-		panic("failed to connect database")
+		panic("database file path is required")
 	}
 	db, err := gorm.Open(sqlite.Open(params.File), &gorm.Config{})
 	if err != nil {
-		panic("failed to connect database")
+		panic("failed to connect database: " + err.Error())
 	}
 	return db
 }
