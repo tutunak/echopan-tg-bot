@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"gorm.io/gorm"
 )
 
 func TestInitDbParams_WithEnvVar(t *testing.T) {
