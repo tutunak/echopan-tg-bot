@@ -27,8 +27,7 @@ func TestInitDbParams_WithoutEnvVar(t *testing.T) {
 
 func TestDbConnect_InMemory(t *testing.T) {
 	params := &DbParams{File: ":memory:"} // Use in-memory SQLite database
-	var db *gorm.DB                     // Explicitly declare type
-	db = DbConnect(params)
+	db := DbConnect(params)
 	assert.NotNil(t, db, "Database connection should not be nil for in-memory database")
 
 	// Optional: Test if the database is usable by performing a simple query
