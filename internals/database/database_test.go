@@ -64,7 +64,7 @@ func TestDbConnect_PanicsWithInvalidFile(t *testing.T) {
 
 	params := &DbParams{File: "/this/path/should/not/be/writable/test.db"} // Invalid path
 
-	assert.PanicsWithValue(t, "failed to connect database", func() {
+	assert.PanicsWithValue(t, "failed to connect database: unable to open database file: no such file or directory", func() {
 		DbConnect(params)
 	}, "DbConnect should panic with 'failed to connect database' for an invalid file path")
 }
@@ -72,7 +72,7 @@ func TestDbConnect_PanicsWithInvalidFile(t *testing.T) {
 func TestDbConnect_PanicsWithEmptyFile(t *testing.T) {
 	params := &DbParams{File: ""} // Empty file path
 
-	assert.PanicsWithValue(t, "failed to connect database", func() {
+	assert.PanicsWithValue(t, "database file path is required", func() {
 		DbConnect(params)
 	}, "DbConnect should panic with 'failed to connect database' for an empty file path")
 }
