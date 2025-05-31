@@ -9,8 +9,14 @@ import (
 
 func TestInitDbParams_WithEnvVar(t *testing.T) {
 	expectedFile := "test.db"
-	os.Setenv("ECHOPAN_DB_FILE", expectedFile)
-	defer os.Unsetenv("ECHOPAN_DB_FILE")
+	if err := os.Setenv("ECHOPAN_DB_FILE", expectedFile); err != nil {
+		t.Fatalf("failed to set env: %v", err)
+	}
+	defer func() {
+		if err := os.Unsetenv("ECHOPAN_DB_FILE"); err != nil {
+			t.Fatalf("failed to unset env: %v", err)
+		}
+	}()
 
 	params := InitDbParams()
 	assert.Equal(t, expectedFile, params.File)
@@ -18,14 +24,16 @@ func TestInitDbParams_WithEnvVar(t *testing.T) {
 
 func TestInitDbParams_WithoutEnvVar(t *testing.T) {
 	// Ensure the environment variable is not set
-	os.Unsetenv("ECHOPAN_DB_FILE")
+	if err := os.Unsetenv("ECHOPAN_DB_FILE"); err != nil {
+		t.Fatalf("failed to unset env: %v", err)
+	}
 
 	params := InitDbParams()
 	assert.Equal(t, "", params.File)
 }
 
 func TestDbConnect_InMemory(t *testing.T) {
-	params := &DbParams{File: ":memory:"} // Use in-memory SQLite database
+	params := &DbParams{Type: DbTypeSqlite, File: ":memory:"} // Use in-memory SQLite database
 	db := DbConnect(params)
 	assert.NotNil(t, db, "Database connection should not be nil for in-memory database")
 
@@ -38,7 +46,7 @@ func TestDbConnect_InMemory(t *testing.T) {
 
 func TestDbConnect_ValidFile(t *testing.T) {
 	tempFile := "test_echopan.db"
-	params := &DbParams{File: tempFile}
+	params := &DbParams{Type: DbTypeSqlite, File: tempFile}
 	db := DbConnect(params)
 	assert.NotNil(t, db, "Database connection should not be nil for a valid file")
 
@@ -75,4 +83,28 @@ func TestDbConnect_PanicsWithEmptyFile(t *testing.T) {
 	assert.PanicsWithValue(t, "database file path is required", func() {
 		DbConnect(params)
 	}, "DbConnect should panic with 'failed to connect database' for an empty file path")
+}
+
+func TestDbConnect_Postgres_InvalidDSN(t *testing.T) {
+	params := &DbParams{Type: DbTypePostgres, DSN: ""}
+	assert.PanicsWithValue(t, "DSN is required for postgres", func() {
+		DbConnect(params)
+	})
+}
+
+// Note: This test requires a running PostgreSQL instance and a valid DSN.
+// You can set ECHOPAN_DB_DSN to a test database for integration testing.
+func TestDbConnect_Postgres_ValidDSN(t *testing.T) {
+	dsn := os.Getenv("ECHOPAN_DB_DSN")
+	if dsn == "" {
+		t.Skip("ECHOPAN_DB_DSN not set; skipping Postgres integration test")
+	}
+	params := &DbParams{Type: DbTypePostgres, DSN: dsn}
+	db := DbConnect(params)
+	assert.NotNil(t, db, "Database connection should not be nil for valid Postgres DSN")
+
+	var result int
+	err := db.Raw("SELECT 1").Scan(&result).Error
+	assert.NoError(t, err, "Should be able to execute a simple query on Postgres DB")
+	assert.Equal(t, 1, result, "Query result should be 1")
 }
