@@ -328,3 +328,170 @@ func BenchmarkGetAllFeeds(b *testing.B) {
 		}
 	}
 }
+
+// TestGetReadyFeeds_Success tests the normal case where ready feeds exist in the database and are successfully returned
+func TestGetReadyFeeds_Success(t *testing.T) {
+	// Set up mock database
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("Failed to create mock database: %v", err)
+	}
+	defer db.Close()
+
+	// Convert to GORM DB
+	gormDB, err := gorm.Open(mysql.New(mysql.Config{
+		Conn:                      db,
+		SkipInitializeWithVersion: true,
+	}), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("Failed to open GORM DB: %v", err)
+	}
+
+	// Define expected rows for ready feeds (PublishReady = true)
+	rows := sqlmock.NewRows([]string{"id", "title", "description", "link", "feed", "publish_ready", "tg_channel", "extra_link_enabled", "extra_link"}).
+		AddRow(1, "Ready Feed 1", "Description 1", "http://example.com/1", "http://example.com/feed/1", true, 123456789, false, "").
+		AddRow(2, "Ready Feed 2", "Description 2", "http://example.com/2", "http://example.com/feed/2", true, 987654321, true, "http://extra.link")
+
+	// Set up expectations - we're using a regexp to match the WHERE clause for ready feeds
+	mock.ExpectQuery("^SELECT (.+) FROM `feeds` WHERE (.*)publish_ready(.*) = ?(.*)").
+		WithArgs(true).
+		WillReturnRows(rows)
+
+	// Call the function being tested
+	feeds, err := GetReadyFeeds(gormDB)
+	assert.NoError(t, err)
+
+	// Check the results
+	expectedFeeds := []models.Feed{
+		{
+			Model:            gorm.Model{ID: 1},
+			Title:            "Ready Feed 1",
+			Description:      "Description 1",
+			Link:             "http://example.com/1",
+			Feed:             "http://example.com/feed/1",
+			PublishReady:     true,
+			TgChannel:        123456789,
+			ExtraLinkEnabled: false,
+			ExtraLink:        "",
+		},
+		{
+			Model:            gorm.Model{ID: 2},
+			Title:            "Ready Feed 2",
+			Description:      "Description 2",
+			Link:             "http://example.com/2",
+			Feed:             "http://example.com/feed/2",
+			PublishReady:     true,
+			TgChannel:        987654321,
+			ExtraLinkEnabled: true,
+			ExtraLink:        "http://extra.link",
+		},
+	}
+
+	// Verify results
+	assert.Equal(t, len(expectedFeeds), len(feeds))
+	for i, feed := range feeds {
+		assert.Equal(t, expectedFeeds[i].ID, feed.ID)
+		assert.Equal(t, expectedFeeds[i].Title, feed.Title)
+		assert.Equal(t, expectedFeeds[i].Description, feed.Description)
+		assert.Equal(t, expectedFeeds[i].Link, feed.Link)
+		assert.Equal(t, expectedFeeds[i].Feed, feed.Feed)
+		assert.Equal(t, expectedFeeds[i].PublishReady, feed.PublishReady)
+		assert.Equal(t, expectedFeeds[i].TgChannel, feed.TgChannel)
+		assert.Equal(t, expectedFeeds[i].ExtraLinkEnabled, feed.ExtraLinkEnabled)
+		assert.Equal(t, expectedFeeds[i].ExtraLink, feed.ExtraLink)
+	}
+
+	// Ensure all expectations were met
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("Unfulfilled expectations: %s", err)
+	}
+}
+
+// TestGetReadyFeeds_Empty tests retrieving an empty result set (when no ready feeds exist)
+func TestGetReadyFeeds_Empty(t *testing.T) {
+	// Set up mock database
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("Failed to create mock database: %v", err)
+	}
+	defer db.Close()
+
+	// Convert to GORM DB
+	gormDB, err := gorm.Open(mysql.New(mysql.Config{
+		Conn:                      db,
+		SkipInitializeWithVersion: true,
+	}), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("Failed to open GORM DB: %v", err)
+	}
+
+	// Define empty result set
+	rows := sqlmock.NewRows([]string{"id", "title", "description", "link", "feed", "publish_ready", "tg_channel", "extra_link_enabled", "extra_link"})
+
+	// Set up expectations
+	mock.ExpectQuery("^SELECT (.+) FROM `feeds` WHERE (.*)publish_ready(.*) = ?(.*)").
+		WithArgs(true).
+		WillReturnRows(rows)
+
+	// Call the function being tested
+	feeds, err := GetReadyFeeds(gormDB)
+	assert.NoError(t, err)
+
+	// Verify results - should be an empty slice, not nil
+	assert.NotNil(t, feeds)
+	assert.Empty(t, feeds)
+
+	// Ensure all expectations were met
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("Unfulfilled expectations: %s", err)
+	}
+}
+
+// TestGetReadyFeeds_Error tests error handling when the database query fails
+func TestGetReadyFeeds_Error(t *testing.T) {
+	// Set up mock database
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("Failed to create mock database: %v", err)
+	}
+	defer db.Close()
+
+	// Convert to GORM DB
+	gormDB, err := gorm.Open(mysql.New(mysql.Config{
+		Conn:                      db,
+		SkipInitializeWithVersion: true,
+	}), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("Failed to open GORM DB: %v", err)
+	}
+
+	// Set up expectations - return an error
+	expectedErr := errors.New("database connection failed")
+	mock.ExpectQuery("^SELECT (.+) FROM `feeds` WHERE (.*)publish_ready(.*) = ?(.*)").
+		WithArgs(true).
+		WillReturnError(expectedErr)
+
+	// Call the function being tested
+	feeds, err := GetReadyFeeds(gormDB)
+
+	// Verify results
+	assert.Error(t, err)
+	assert.Equal(t, expectedErr, err)
+	assert.Nil(t, feeds)
+
+	// Ensure all expectations were met
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("Unfulfilled expectations: %s", err)
+	}
+}
+
+// TestGetReadyFeeds_NilDB tests how the function behaves when passed a nil database
+func TestGetReadyFeeds_NilDB(t *testing.T) {
+	// Call with nil DB - should handle this gracefully
+	feeds, err := GetReadyFeeds(nil)
+
+	// Expect an error
+	assert.Error(t, err)
+	assert.Equal(t, "database connection is nil", err.Error())
+	assert.Nil(t, feeds)
+}

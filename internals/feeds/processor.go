@@ -18,3 +18,17 @@ func GetAllFeeds(db *gorm.DB) ([]models.Feed, error) {
 	}
 	return feeds, nil
 }
+
+// GetReadyFeeds retrieves all feeds that are marked as ready for publishing
+func GetReadyFeeds(db *gorm.DB) ([]models.Feed, error) {
+	if db == nil {
+		return nil, errors.New("database connection is nil")
+	}
+
+	var feeds []models.Feed
+	result := db.Where(&models.Feed{PublishReady: true}).Find(&feeds)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return feeds, nil
+}
