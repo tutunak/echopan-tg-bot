@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/tutuna/echopan/internals/database"
+	"github.com/tutuna/echopan/internals/feeds"
 	"github.com/tutuna/echopan/internals/models"
 	"io"
 	"log"
@@ -79,14 +80,6 @@ func reInitFeeds() {
 	}
 }
 
-func getAllFeeds(db *gorm.DB) ([]models.Feed, error) {
-	var feeds []models.Feed
-	if err := db.Find(&feeds).Error; err != nil {
-		return nil, err
-	}
-	return feeds, nil
-}
-
 func updateItems(db *gorm.DB, items []*gofeed.Item, feed *models.Feed) error {
 	db.AutoMigrate(&models.Item{})
 	db.AutoMigrate(&models.Enclosure{})
@@ -158,7 +151,7 @@ func fullFeed(feedTitle string) {
 func checkFeeds() {
 	dbParams := database.InitDbParams()
 	db := database.DbConnect(dbParams)
-	feeds, err := getAllFeeds(db)
+	feeds, err := feeds.GetAllFeeds(db)
 	if err != nil {
 		log.Println("Error getting feeds:", err)
 		return
@@ -173,7 +166,6 @@ func checkFeeds() {
 		}
 		items := feedData.Items[:9]
 		updateItems(db, items, &feed)
-
 	}
 }
 
