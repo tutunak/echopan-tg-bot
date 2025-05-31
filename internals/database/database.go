@@ -17,6 +17,9 @@ func InitDbParams() *DbParams {
 }
 
 func DbConnect(params *DbParams) *gorm.DB {
+	if params.File == "" {
+		panic("failed to connect database")
+	}
 	db, err := gorm.Open(sqlite.Open(params.File), &gorm.Config{})
 	if err != nil {
 		panic("failed to connect database")
