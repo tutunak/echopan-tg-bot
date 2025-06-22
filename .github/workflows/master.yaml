@@ -43,6 +43,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: semantic-versioning
+        id: semantic-versioning
         uses: paulhatch/semantic-version@v5.4.0
         with:
           tag-prefix: 'v'

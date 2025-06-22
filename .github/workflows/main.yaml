@@ -40,6 +40,12 @@ jobs:
           registry: ghcr.io/${{ github.repository }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: semantic-versioning
+        id: semantic-versioning
+        uses: paulhatch/semantic-version@v5.4.0
+        with:
+          tag-prefix: 'v'
+          version_format: '${major}.${minor}.${patch}'
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
@@ -48,6 +54,9 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: false
-          tags: ghcr.io/${{ github.repository }}:${{ github.sha }}
+          tags: |
+            ghcr.io/${{ github.repository }}:${{ github.sha }}
+            ghcr.io/${{ github.repository }}:${{ steps.semantic-versioning.outputs.version }}
+            ghcr.io/${{ github.repository }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
