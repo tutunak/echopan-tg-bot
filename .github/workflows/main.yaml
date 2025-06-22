@@ -35,7 +35,9 @@ jobs:
         - Dockerfile
         - Test
     steps:
-    - uses: actions/checkout@v4
-    - name: podman build
-      run: |
-        podman build .
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
