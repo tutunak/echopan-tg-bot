@@ -57,7 +57,7 @@ jobs:
           push: true
           tags: |
             ghcr.io/${{ github.repository }}:${{ github.sha }}
-            ghcr.io/${{ github.repository }}:${{ semantic_version.version }}
+            ghcr.io/${{ github.repository }}:${{ steps.semantic-versioning.outputs.version }}
             ghcr.io/${{ github.repository }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
